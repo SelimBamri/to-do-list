@@ -3,6 +3,7 @@ package com.example.todolist.services;
 import com.example.todolist.entities.User;
 import com.example.todolist.repositories.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -38,6 +39,10 @@ public class UserService {
 
     public void deleteUserById(UUID id) {
         userRepository.deleteById(id);
+    }
+
+    public User getUserById(UUID id) {
+        return userRepository.findById(id).orElseThrow(()->new UsernameNotFoundException("The id doesn't exist"));
     }
 
 }

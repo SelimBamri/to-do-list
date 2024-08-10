@@ -56,5 +56,4 @@ public class AuthenticationController {
         blacklistTokenService.blacklistToken(jwtToken, expirationTime);
         return ResponseEntity.ok().body("Successfully logged out");
     }
-
 }

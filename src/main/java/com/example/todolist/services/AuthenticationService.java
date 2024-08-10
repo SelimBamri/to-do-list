@@ -40,7 +40,7 @@ public class AuthenticationService {
                         input.getPassword()
                 )
         );
-        return userService.getUserByEmail(input.getUsername())
+        return userService.getUserByUsername(input.getUsername())
                 .orElseThrow();
     }
 }

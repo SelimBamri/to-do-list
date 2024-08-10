@@ -1,6 +1,7 @@
 package com.example.todolist.services;
 
 import com.example.todolist.entities.RefreshToken;
+import com.example.todolist.entities.User;
 import com.example.todolist.repositories.RefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ public class RefreshTokenService {
 
     public RefreshToken createRefreshToken(String username){
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUser(userService.getUserByEmail(username).get());
+        refreshToken.setUser(userService.getUserByUsername(username).get());
         refreshToken.setToken(UUID.randomUUID().toString());
         refreshToken.setExpiryDate(Instant.now().plusMillis(600000));
         return refreshTokenRepository.save(refreshToken);
@@ -40,7 +41,9 @@ public class RefreshTokenService {
         }
         return token;
     }
-
+    public RefreshToken findByUser(User user){
+        return refreshTokenRepository.findByUser(user).orElse(null);
+    }
     public void deleteByToken(String token){
         refreshTokenRepository.deleteByToken(token);
     }
