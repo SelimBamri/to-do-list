@@ -34,12 +34,6 @@ public class UserController {
         return ResponseEntity.ok(currentUser);
     }
 
-    @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUser(@PathVariable UUID id) {
-        User user = userService.getUserById(id);
-        return ResponseEntity.ok(user);
-    }
-
     @DeleteMapping("/")
     public ResponseEntity<?> deleteMyAccount(@RequestBody RefreshTokenRequestDto refreshTokenDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
