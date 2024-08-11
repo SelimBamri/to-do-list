@@ -1,5 +1,6 @@
 package com.example.todolist.services;
 
+import com.example.todolist.entities.RoleEnum;
 import com.example.todolist.entities.User;
 import com.example.todolist.repositories.UserRepository;
 import lombok.AllArgsConstructor;
@@ -34,7 +35,7 @@ public class UserService {
 
     public boolean adminExists() {
         return getAllUsers().stream()
-               .anyMatch(user -> user.getRole().getName().equals("ADMIN"));
+               .anyMatch(user -> user.getRole().getName().equals(RoleEnum.ADMIN));
     }
 
     public void deleteUserById(UUID id) {

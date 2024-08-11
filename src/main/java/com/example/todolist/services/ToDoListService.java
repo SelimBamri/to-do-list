@@ -4,6 +4,7 @@ import com.example.todolist.entities.ToDoList;
 import com.example.todolist.repositories.ToDoListRepository;
 import lombok.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 
@@ -27,4 +28,5 @@ public class ToDoListService {
     public List<ToDoList> getAllToDoLists() {
         return toDoListRepository.findAll();
     }
+
 }

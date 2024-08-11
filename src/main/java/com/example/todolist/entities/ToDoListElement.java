@@ -1,6 +1,7 @@
 package com.example.todolist.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,7 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(name = "todo_lists")
+@Table(name = "todo_elements")
 public class ToDoListElement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,6 +22,7 @@ public class ToDoListElement {
     @Column(name = "completed")
     private boolean isCompleted;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "todo_list_id", referencedColumnName = "id")
     private ToDoList toDoList;

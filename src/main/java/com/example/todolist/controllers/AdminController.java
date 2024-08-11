@@ -4,6 +4,8 @@ import com.example.todolist.dtos.requests.RefreshTokenRequestDto;
 import com.example.todolist.dtos.requests.RegisterUserRequestDto;
 import com.example.todolist.dtos.responses.LoginResponseDto;
 import com.example.todolist.entities.RefreshToken;
+import com.example.todolist.entities.Role;
+import com.example.todolist.entities.RoleEnum;
 import com.example.todolist.entities.User;
 import com.example.todolist.services.*;
 import lombok.*;
@@ -15,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RequestMapping("/admin")
@@ -27,6 +30,7 @@ public class AdminController {
     private final JwtService jwtService;
     private final BlacklistTokenService blacklistTokenService;
     private final PasswordEncoder passwordEncoder;
+    private final RoleService roleService;
 
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable UUID id) {
@@ -100,6 +104,20 @@ public class AdminController {
             return ResponseEntity.ok().body("done");
         }
     }
-    
+
+    @PostMapping("/new")
+    public ResponseEntity<?> register(@RequestBody RegisterUserRequestDto registerUserDto) {
+        Optional<Role> optionalRole = roleService.getRoleByName(RoleEnum.ADMIN);
+        if (optionalRole.isEmpty()) {
+            return ResponseEntity.badRequest().body("Try Later... Unable to find admin role");
+        }
+        User adminUser = new User();
+        adminUser.setUsername(registerUserDto.getUsername());
+        adminUser.setFullName(registerUserDto.getFullName());
+        adminUser.setPassword(passwordEncoder.encode(registerUserDto.getPassword()));
+        adminUser.setRole(optionalRole.get());
+        userService.saveUser(adminUser);
+        return ResponseEntity.ok(adminUser);
+    }
 }
 
