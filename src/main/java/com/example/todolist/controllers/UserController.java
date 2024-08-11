@@ -6,6 +6,7 @@ import com.example.todolist.dtos.responses.LoginResponseDto;
 import com.example.todolist.entities.RefreshToken;
 import com.example.todolist.entities.User;
 import com.example.todolist.services.*;
+import jakarta.transaction.Transactional;
 import lombok.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,32 +25,32 @@ public class UserController {
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
     private final JwtService jwtService;
-    private final BlacklistTokenService blacklistTokenService;
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/")
     public ResponseEntity<User> getMyAccount() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(currentUser);
+        return ResponseEntity.ok(userService.getUserById(currentUser.getId()));
     }
 
+    @Transactional
     @DeleteMapping("/")
-    public ResponseEntity<?> deleteMyAccount(@RequestBody RefreshTokenRequestDto refreshTokenDto) {
+    public ResponseEntity<?> deleteMyAccount() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
+        refreshTokenService.deleteByUser(currentUser);
+        refreshTokenService.flush();
         userService.deleteUserById(currentUser.getId());
-        refreshTokenService.deleteByToken(refreshTokenDto.getRefreshToken());
-        String jwtToken = refreshTokenDto.getRefreshToken();
-        long expirationTime = jwtService.getExpirationTime();
-        blacklistTokenService.blacklistToken(jwtToken, expirationTime);
-        return ResponseEntity.ok().body("Successfully logged out");
+        return ResponseEntity.ok().body("Successfully deleted account");
     }
 
+    @Transactional
     @PutMapping("/")
     public ResponseEntity<?> updateMyAccount(@RequestBody RegisterUserRequestDto input) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
+        currentUser = userService.getUserById(currentUser.getId());
         boolean newToken = false;
         boolean change = false;
         if(input.getPassword()!= null && currentUser.getPassword()!= null && !passwordEncoder.matches(input.getPassword(), currentUser.getPassword())) {
@@ -72,6 +73,7 @@ public class UserController {
             RefreshToken refreshToken = refreshTokenService.findByUser(currentUser);
             if(refreshToken!= null){
                 refreshTokenService.deleteByToken(refreshToken.getToken());
+                refreshTokenService.flush();
             }
             refreshToken = refreshTokenService.createRefreshToken(currentUser.getUsername());
             LoginResponseDto loginResponse = new LoginResponseDto(jwtToken, refreshToken.getToken(), jwtService.getExpirationTime());

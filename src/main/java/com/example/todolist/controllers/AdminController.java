@@ -28,12 +28,11 @@ public class AdminController {
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
     private final JwtService jwtService;
-    private final BlacklistTokenService blacklistTokenService;
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable UUID id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         userService.deleteUserById(id);
         return ResponseEntity.ok().body("Successfully deleted user");
     }
@@ -52,7 +51,7 @@ public class AdminController {
     }
 
     @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUser(@PathVariable UUID id) {
+    public ResponseEntity<User> getUser(@PathVariable Long id) {
         User user = userService.getUserById(id);
         return ResponseEntity.ok(user);
     }
@@ -65,7 +64,6 @@ public class AdminController {
         refreshTokenService.deleteByToken(refreshTokenDto.getRefreshToken());
         String jwtToken = refreshTokenDto.getRefreshToken();
         long expirationTime = jwtService.getExpirationTime();
-        blacklistTokenService.blacklistToken(jwtToken, expirationTime);
         return ResponseEntity.ok().body("Successfully logged out");
     }
 

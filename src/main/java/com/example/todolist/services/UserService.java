@@ -38,11 +38,11 @@ public class UserService {
                .anyMatch(user -> user.getRole().getName().equals(RoleEnum.ADMIN));
     }
 
-    public void deleteUserById(UUID id) {
+    public void deleteUserById(Long id) {
         userRepository.deleteById(id);
     }
 
-    public User getUserById(UUID id) {
+    public User getUserById(Long id) {
         return userRepository.findById(id).orElseThrow(()->new UsernameNotFoundException("The id doesn't exist"));
     }
 

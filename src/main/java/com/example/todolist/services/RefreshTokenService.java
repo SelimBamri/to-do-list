@@ -48,4 +48,12 @@ public class RefreshTokenService {
         refreshTokenRepository.deleteByToken(token);
     }
 
+    public void deleteByUser(User user){
+        refreshTokenRepository.deleteByUser(user);
+    }
+
+    public void flush(){
+        refreshTokenRepository.flush();
+    }
+
 }

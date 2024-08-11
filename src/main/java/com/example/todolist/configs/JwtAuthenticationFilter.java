@@ -1,6 +1,5 @@
 package com.example.todolist.configs;
 
-import com.example.todolist.services.BlacklistTokenService;
 import com.example.todolist.services.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -27,7 +26,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-    private BlacklistTokenService blacklistTokenService;
 
 
     @Override
@@ -45,11 +43,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             final String jwt = authHeader.substring(7);
-            if (blacklistTokenService.isTokenBlacklisted(jwt)) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Token is blacklisted and cannot be used");
-                return;
-            }
             final String username = jwtService.extractUsername(jwt);
 
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

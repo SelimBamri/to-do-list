@@ -8,6 +8,7 @@ import com.example.todolist.services.RoleService;
 import com.example.todolist.services.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import java.util.Optional;
 
 @Component
 @AllArgsConstructor
+@DependsOn("roleSeeder")
 public class AdminSeeder implements ApplicationListener<ContextRefreshedEvent> {
     private final RoleService roleService;
     private final UserService userService;

@@ -6,6 +6,7 @@ import com.example.todolist.entities.ToDoListElement;
 import com.example.todolist.entities.User;
 import com.example.todolist.services.ToDoListElementService;
 import com.example.todolist.services.ToDoListService;
+import com.example.todolist.services.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,17 +21,18 @@ import java.util.List;
 public class ToDoListController {
     private final ToDoListService toDoListService;
     private final ToDoListElementService toDoListElementService;
+    private final UserService userService;
     @GetMapping("/")
     public ResponseEntity<List<ToDoList>> getMyToDoLists() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
+        User currentUser = userService.getUserById(((User) authentication.getPrincipal()).getId());
         return ResponseEntity.ok(currentUser.getToDoLists());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteToDoList(@PathVariable Long id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
+        User currentUser = userService.getUserById(((User) authentication.getPrincipal()).getId());
         ToDoList toDoListToDelete = toDoListService.getToDoListById(id);
         if(toDoListToDelete == null ||!toDoListToDelete.getUser().equals(currentUser) ){
             return ResponseEntity.badRequest().body("You don't have access to delete this todo list");
@@ -42,7 +44,7 @@ public class ToDoListController {
     @DeleteMapping("/element/{id}")
     public ResponseEntity<?> deleteToDoElement(@PathVariable Long id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
+        User currentUser = userService.getUserById(((User) authentication.getPrincipal()).getId());
         ToDoListElement toDoListToDelete = toDoListElementService.findById(id);
         if(toDoListToDelete == null ||!toDoListToDelete.getToDoList().getUser().equals(currentUser) ){
             return ResponseEntity.badRequest().body("You don't have access to delete this todo list");
@@ -54,7 +56,7 @@ public class ToDoListController {
     @PostMapping("/")
     public ResponseEntity<?> createToDoList(@RequestBody ToDoListRequest toDoListRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
+        User currentUser = ((User) authentication.getPrincipal());
         ToDoList newToDoList = new ToDoList();
         newToDoList.setTitle(toDoListRequest.getTitle());
         newToDoList.setUser(currentUser);
@@ -65,27 +67,28 @@ public class ToDoListController {
     @PostMapping("/{id}")
     public ResponseEntity<?> addItem(@RequestBody ToDoListRequest toDoListRequest, @PathVariable Long id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
+        User currentUser = userService.getUserById(((User) authentication.getPrincipal()).getId());
         ToDoList toDoList = toDoListService.getToDoListById(id);
         if(toDoList == null ||!toDoList.getUser().equals(currentUser) ){
-            return ResponseEntity.badRequest().body("You don't have access to delete this todo list");
+            return ResponseEntity.badRequest().body("You don't have access to add to this todo list");
         }
         ToDoListElement newItem = new ToDoListElement();
         newItem.setElement(toDoListRequest.getTitle());
         newItem.setCompleted(false);
-        return ResponseEntity.ok(newItem);
+        newItem.setToDoList(toDoList);
+        return ResponseEntity.ok(toDoListElementService.saveToDoListElement(newItem));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> checkItem(@PathVariable Long id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
+        User currentUser = userService.getUserById(((User) authentication.getPrincipal()).getId());
         ToDoListElement toDoListElement = toDoListElementService.findById(id);
         if(toDoListElement == null ||!toDoListElement.getToDoList().getUser().equals(currentUser) ){
             return ResponseEntity.badRequest().body("You don't have access to modify this item");
         }
         toDoListElement.setCompleted(!toDoListElement.isCompleted());
-        return ResponseEntity.ok(toDoListElement);
+        return ResponseEntity.ok(toDoListElementService.saveToDoListElement(toDoListElement));
     }
 
 }
