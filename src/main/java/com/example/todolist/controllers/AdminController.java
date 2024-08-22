@@ -1,9 +1,7 @@
 package com.example.todolist.controllers;
 
-import com.example.todolist.dtos.requests.RefreshTokenRequestDto;
 import com.example.todolist.dtos.requests.RegisterUserRequestDto;
 import com.example.todolist.dtos.responses.LoginResponseDto;
-import com.example.todolist.entities.RefreshToken;
 import com.example.todolist.entities.Role;
 import com.example.todolist.entities.RoleEnum;
 import com.example.todolist.entities.User;
@@ -18,7 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @RequestMapping("/admin")
 @RestController
@@ -26,7 +23,6 @@ import java.util.UUID;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
     private final UserService userService;
-    private final RefreshTokenService refreshTokenService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
@@ -57,14 +53,11 @@ public class AdminController {
     }
 
     @DeleteMapping("/")
-    public ResponseEntity<?> deleteMyAccount(@RequestBody RefreshTokenRequestDto refreshTokenDto) {
+    public ResponseEntity<?> deleteMyAccount() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
         userService.deleteUserById(currentUser.getId());
-        refreshTokenService.deleteByToken(refreshTokenDto.getRefreshToken());
-        String jwtToken = refreshTokenDto.getRefreshToken();
-        long expirationTime = jwtService.getExpirationTime();
-        return ResponseEntity.ok().body("Successfully logged out");
+        return ResponseEntity.ok().body("Successfully deleted account");
     }
 
     @PutMapping("/")
@@ -90,12 +83,7 @@ public class AdminController {
         }
         if(newToken){
             String jwtToken = jwtService.generateToken(currentUser);
-            RefreshToken refreshToken = refreshTokenService.findByUser(currentUser);
-            if(refreshToken!= null){
-                refreshTokenService.deleteByToken(refreshToken.getToken());
-            }
-            refreshToken = refreshTokenService.createRefreshToken(currentUser.getUsername());
-            LoginResponseDto loginResponse = new LoginResponseDto(jwtToken, refreshToken.getToken(), jwtService.getExpirationTime());
+            LoginResponseDto loginResponse = new LoginResponseDto(jwtToken, jwtService.getExpirationTime());
             return ResponseEntity.ok(loginResponse);
         }
         else{
