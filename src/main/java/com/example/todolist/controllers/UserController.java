@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RequestMapping("/user")
 @RestController
 @AllArgsConstructor
@@ -35,7 +38,9 @@ public class UserController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
         userService.deleteUserById(currentUser.getId());
-        return ResponseEntity.ok().body("Successfully deleted account");
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Successfully deleted account");
+        return ResponseEntity.ok(response);
     }
 
     @Transactional
