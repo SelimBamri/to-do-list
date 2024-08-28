@@ -2,6 +2,7 @@ package com.example.todolist.controllers;
 
 import com.example.todolist.dtos.requests.RegisterUserRequestDto;
 import com.example.todolist.dtos.responses.LoginResponseDto;
+import com.example.todolist.dtos.responses.ProfileResponseDto;
 import com.example.todolist.entities.User;
 import com.example.todolist.services.*;
 import jakarta.transaction.Transactional;
@@ -13,23 +14,34 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 @RequestMapping("/user")
 @RestController
 @AllArgsConstructor
-@PreAuthorize("hasRole('USER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
 public class UserController {
     private final UserService userService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/")
-    public ResponseEntity<User> getMyAccount() {
+    public ResponseEntity<ProfileResponseDto> getMyAccount(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(userService.getUserById(currentUser.getId()));
+        User currentUser = userService.getUserById(((User) authentication.getPrincipal()).getId());
+        ProfileResponseDto response = new ProfileResponseDto();
+        response.setId(currentUser.getId());
+        response.setUsername(currentUser.getUsername());
+        response.setCreatedAt(currentUser.getCreatedAt());
+        response.setUpdatedAt(currentUser.getUpdatedAt());
+        response.setFirstName(currentUser.getFirstName());
+        response.setLastName(currentUser.getLastName());
+        if(currentUser.getPhoto() != null){
+            response.setPhoto(new String(currentUser.getPhoto(), StandardCharsets.UTF_8));
+        }
+        return ResponseEntity.ok(response);
     }
 
     @Transactional
@@ -59,9 +71,20 @@ public class UserController {
             currentUser.setUsername(input.getUsername());
             newToken = true;
         }
-        if(input.getFullName()!= null) {
-            currentUser.setFullName(input.getFullName());
+        if(input.getFirstName()!= null) {
+            currentUser.setFirstName(input.getFirstName());
             change = true;
+        }
+        if(input.getLastName()!= null) {
+            currentUser.setLastName(input.getLastName());
+            change = true;
+        }
+        if(input.getPhoto() != null) {
+            currentUser.setPhoto(input.getPhoto().getBytes(StandardCharsets.UTF_8));
+            change = true;
+        }
+        else{
+            currentUser.setPhoto(null);
         }
         if(newToken || change) {
             userService.saveUser(currentUser);
@@ -72,7 +95,9 @@ public class UserController {
             return ResponseEntity.ok(loginResponse);
         }
         else{
-            return ResponseEntity.ok().body("done");
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Successfully updated account");
+            return ResponseEntity.ok(response);
         }
     }
 }

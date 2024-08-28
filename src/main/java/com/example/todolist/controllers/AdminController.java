@@ -1,7 +1,7 @@
 package com.example.todolist.controllers;
 
 import com.example.todolist.dtos.requests.RegisterUserRequestDto;
-import com.example.todolist.dtos.responses.LoginResponseDto;
+import com.example.todolist.dtos.responses.ProfileResponseDto;
 import com.example.todolist.entities.Role;
 import com.example.todolist.entities.RoleEnum;
 import com.example.todolist.entities.User;
@@ -11,11 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.List;
-import java.util.Optional;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @RequestMapping("/admin")
 @RestController
@@ -23,72 +21,51 @@ import java.util.Optional;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
     private final UserService userService;
-    private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
 
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         userService.deleteUserById(id);
-        return ResponseEntity.ok().body("Successfully deleted user");
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Successfully deleted account");
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<ProfileResponseDto>> getAllUsers() {
         List<User> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
-    }
-
-    @GetMapping("/")
-    public ResponseEntity<User> getMyAccount() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(currentUser);
+        List<ProfileResponseDto> res = new ArrayList<ProfileResponseDto>();
+        for (User user : users) {
+            ProfileResponseDto resUser = new ProfileResponseDto();
+            resUser.setId(user.getId());
+            resUser.setUsername(user.getUsername());
+            resUser.setCreatedAt(user.getCreatedAt());
+            resUser.setUpdatedAt(user.getUpdatedAt());
+            resUser.setFirstName(user.getFirstName());
+            resUser.setLastName(user.getLastName());
+            if(user.getPhoto()!= null){
+                resUser.setPhoto(new String(user.getPhoto(), StandardCharsets.UTF_8));
+            }
+            res.add(resUser);
+        }
+        return ResponseEntity.ok(res);
     }
 
     @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUser(@PathVariable Long id) {
+    public ResponseEntity<ProfileResponseDto> getUser(@PathVariable Long id) {
         User user = userService.getUserById(id);
-        return ResponseEntity.ok(user);
-    }
-
-    @DeleteMapping("/")
-    public ResponseEntity<?> deleteMyAccount() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
-        userService.deleteUserById(currentUser.getId());
-        return ResponseEntity.ok().body("Successfully deleted account");
-    }
-
-    @PutMapping("/")
-    public ResponseEntity<?> updateMyAccount(@RequestBody RegisterUserRequestDto input) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = (User) authentication.getPrincipal();
-        boolean newToken = false;
-        boolean change = false;
-        if(input.getPassword()!= null && currentUser.getPassword()!= null && !passwordEncoder.matches(input.getPassword(), currentUser.getPassword())) {
-            currentUser.setPassword(passwordEncoder.encode(input.getPassword()));
-            newToken = true;
+        ProfileResponseDto resUser = new ProfileResponseDto();
+        resUser.setId(user.getId());
+        resUser.setUsername(user.getUsername());
+        resUser.setCreatedAt(user.getCreatedAt());
+        resUser.setUpdatedAt(user.getUpdatedAt());
+        resUser.setFirstName(user.getFirstName());
+        resUser.setLastName(user.getLastName());
+        if(user.getPhoto()!= null){
+            resUser.setPhoto(new String(user.getPhoto(), StandardCharsets.UTF_8));
         }
-        if(input.getUsername()!= null && !currentUser.getUsername().equals(input.getUsername())) {
-            currentUser.setUsername(input.getUsername());
-            newToken = true;
-        }
-        if(input.getFullName()!= null) {
-            currentUser.setFullName(input.getFullName());
-            change = true;
-        }
-        if(newToken || change) {
-            userService.saveUser(currentUser);
-        }
-        if(newToken){
-            String jwtToken = jwtService.generateToken(currentUser);
-            LoginResponseDto loginResponse = new LoginResponseDto(jwtToken, jwtService.getExpirationTime());
-            return ResponseEntity.ok(loginResponse);
-        }
-        else{
-            return ResponseEntity.ok().body("done");
-        }
+        return ResponseEntity.ok(resUser);
     }
 
     @PostMapping("/new")
@@ -99,9 +76,13 @@ public class AdminController {
         }
         User adminUser = new User();
         adminUser.setUsername(registerUserDto.getUsername());
-        adminUser.setFullName(registerUserDto.getFullName());
+        adminUser.setFirstName(registerUserDto.getFirstName());
+        adminUser.setLastName(registerUserDto.getFirstName());
         adminUser.setPassword(passwordEncoder.encode(registerUserDto.getPassword()));
         adminUser.setRole(optionalRole.get());
+        if(registerUserDto.getPhoto() != null) {
+            adminUser.setPhoto(registerUserDto.getPhoto().getBytes(StandardCharsets.UTF_8));
+        }
         userService.saveUser(adminUser);
         return ResponseEntity.ok(adminUser);
     }

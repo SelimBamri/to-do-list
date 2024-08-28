@@ -31,7 +31,8 @@ public class AdminSeeder implements ApplicationListener<ContextRefreshedEvent> {
             }
             User adminUser = new User();
             adminUser.setUsername("admin");
-            adminUser.setFullName("Admin");
+            adminUser.setFirstName("Admin");
+            adminUser.setLastName("Admin");
             adminUser.setPassword(passwordEncoder.encode("admin"));
             adminUser.setRole(optionalRole.get());
             userService.saveUser(adminUser);

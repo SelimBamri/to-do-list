@@ -13,7 +13,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/todos")
@@ -29,6 +31,17 @@ public class ToDoListController {
         return ResponseEntity.ok(currentUser.getToDoLists());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getToDoListById(@PathVariable Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userService.getUserById(((User) authentication.getPrincipal()).getId());
+        ToDoList toDoList = toDoListService.getToDoListById(id);
+        if(toDoList == null ||!toDoList.getUser().equals(currentUser) ){
+            return ResponseEntity.badRequest().body("You don't have access to this todo list");
+        }
+        return ResponseEntity.ok(toDoList);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteToDoList(@PathVariable Long id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -38,7 +51,9 @@ public class ToDoListController {
             return ResponseEntity.badRequest().body("You don't have access to delete this todo list");
         }
         toDoListService.deleteToDoListById(id);
-        return ResponseEntity.ok().body("Todo list deleted successfully");
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Todo list deleted successfully");
+        return ResponseEntity.ok().body(response);
     }
 
     @DeleteMapping("/element/{id}")
@@ -49,8 +64,10 @@ public class ToDoListController {
         if(toDoListToDelete == null ||!toDoListToDelete.getToDoList().getUser().equals(currentUser) ){
             return ResponseEntity.badRequest().body("You don't have access to delete this todo list");
         }
-        toDoListElementService.saveToDoListElement(toDoListToDelete);
-        return ResponseEntity.ok().body("Todo list Element deleted successfully");
+        toDoListElementService.deleteById(toDoListToDelete.getId());
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Todo list element deleted successfully");
+        return ResponseEntity.ok().body(response);
     }
 
     @PostMapping("/")

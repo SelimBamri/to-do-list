@@ -12,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @Service
@@ -30,6 +31,9 @@ public class AuthenticationService {
         User user = modelMapper.map(input, User.class);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(optionalRole.get());
+        if(input.getPhoto() != null) {
+            user.setPhoto(input.getPhoto().getBytes(StandardCharsets.UTF_8));
+        }
         return userService.saveUser(user);
     }
 
